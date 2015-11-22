@@ -535,14 +535,19 @@ namespace
         m_side.push_back (boolop::limp (act, mk<EQ> (lhs, op)));
         if (!InferMemSafety) return;
         
+        printf("visitGetElementPtInst.\n");
         // -- extra constraints that exclude undefined behavior
         if (!gep.isInBounds () || gep.getPointerAddressSpace () != 0)
           return;
+        printf("behavior not undefined.\n");
         if (Expr base = lookup (*gep.getPointerOperand ()))
+        {
           // -- base > 0 -> lhs > 0
+          printf("adding constraint.\n");
           m_side.push_back (boolop::limp (m_activeLit,
                                           mk<OR> (mk<LEQ> (base, zeroE),
                                                   mk<GT> (lhs, zeroE))));
+        }
       }
       
     }
@@ -755,14 +760,19 @@ namespace
     {
       if (InferMemSafety)
       {
+        printf("visitLoadInst\n");
         Value *pop = I.getPointerOperand ()->stripPointerCasts ();
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))
         {
+          printf("Got gep from pop.\n");
           Expr base = lookup (*gep->getPointerOperand ());
           if (base)
+          {
+            printf("adding constraint.\n");
             m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+          }
         }
       }
       
@@ -803,14 +813,19 @@ namespace
     {
       if (InferMemSafety)
       {
+        printf("visitStoreInst\n");
         Value *pop = I.getPointerOperand ()->stripPointerCasts ();
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))
         {
+          printf("Got gep from pop.\n");
           Expr base = lookup (*gep->getPointerOperand ());
           if (base)
+          {
+            printf("Adding constraint.\n");
             m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+          }
         }
       }
 
