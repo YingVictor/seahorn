@@ -755,14 +755,14 @@ namespace
     {
       if (InferMemSafety)
       {
-        Value *pop = I.getPointerOperand ()->stripPointerCasts ();
+        Value *pop = I.getPointerOperand ();
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))
         {
           Expr base = lookup (*gep->getPointerOperand ());
           if (base)
-            m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+            m_side.push_back (boolop::limp (m_activeLit, mk<LEGAL_ADDR> (base)));
         }
       }
       
@@ -803,14 +803,14 @@ namespace
     {
       if (InferMemSafety)
       {
-        Value *pop = I.getPointerOperand ()->stripPointerCasts ();
+        Value *pop = I.getPointerOperand ();
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))
         {
           Expr base = lookup (*gep->getPointerOperand ());
           if (base)
-            m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+            m_side.push_back (boolop::limp (m_activeLit, mk<LEGAL_ADDR> (base)));
         }
       }
 

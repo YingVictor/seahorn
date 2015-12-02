@@ -276,6 +276,10 @@ namespace ufo
             z3::ast arg = marshal (e->left(), ctx, cache, seen);
             return z3::ast (ctx, Z3_mk_bvredor(ctx, arg));
           }
+          if (isOp<LEGAL_ADDR>(e))
+          {
+             fprintf(stderr, "OMG we see LEGAL_ADDR!\n");
+          }
 
 	  return M::marshal (e, ctx, cache, seen);
 	}

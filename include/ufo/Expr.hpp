@@ -1976,6 +1976,8 @@ namespace expr
     NOP(ASM,"ASM", PREFIX, MiscOp)
     /** A tupple */
     NOP (TUPLE,"tuple",FUNCTIONAL,MiscOp)
+    /** Assume legal memory address */
+    NOP (LEGAL_ADDR,"legal-addr",FUNCTIONAL,MiscOp)
   }
 
  namespace op
