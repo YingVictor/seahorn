@@ -431,7 +431,7 @@ namespace seahorn
     
     // -- local symbolic execution engine.
     // -- possibly different from the one used to solve the problem
-    UfoSmallSymExec sem (efac, *this, MEM);
+    UfoSmallSymExec sem (efac, *this, MEM, true);
     // large step semantics to encode cp-to-cp edges
     UfoLargeSymExec lsem (sem);
     
