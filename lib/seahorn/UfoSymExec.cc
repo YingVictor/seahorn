@@ -755,7 +755,16 @@ namespace
     {
       if (InferMemSafety)
       {
-        Value *pop = I.getPointerOperand ()->stripPointerCasts ();
+        Value *pop = I.getPointerOperand ();
+        if (m_sem.m_analyzing_cex)
+        {
+	   fprintf(stderr, "Woo we made it to HornCex!\n");
+        }
+        else
+        {
+           fprintf(stderr, "Not in HornCex!\n");
+           pop = pop->stripPointerCasts();
+        }
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))

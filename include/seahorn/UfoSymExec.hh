@@ -19,11 +19,13 @@ namespace seahorn
     
     
   public:
-    UfoSmallSymExec (ExprFactory &efac, Pass &pass, TrackLevel trackLvl = MEM) : 
+    bool m_analyzing_cex;
+    UfoSmallSymExec (ExprFactory &efac, Pass &pass, TrackLevel trackLvl = MEM, bool analyzing_cex = false) :
       SmallStepSymExec (efac), m_pass (pass), m_trackLvl (trackLvl)
     {
       m_td = &pass.getAnalysis<DataLayoutPass> ().getDataLayout ();
       m_canFail = pass.getAnalysisIfAvailable<CanFail> ();
+      m_analyzing_cex = analyzing_cex;
     }
     UfoSmallSymExec (const UfoSmallSymExec& o) : 
       SmallStepSymExec (o), m_pass (o.m_pass), m_trackLvl (o.m_trackLvl) {}
