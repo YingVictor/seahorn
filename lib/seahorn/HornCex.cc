@@ -455,9 +455,26 @@ namespace seahorn
       prev = cp;
     }
     
-    
     ZSolver<EZ3> solver (hm.getZContext ());
-    for (Expr v : side) solver.assertExpr (v);
+    ExprVector legal_addrs;
+    for (Expr v : side)
+    {
+      solver.assertExpr (v);
+
+      if (bind::isFapp (v))
+      {
+        Expr name = bind::fname (v);
+        if (isOpX<STRING> (name))
+        {
+          if (std::strcmp(getTerm<std::string> (name), "legal_addr") == 0)
+          {
+            Expr arg = v->last();
+            legal_addrs.push_back (arg);
+            errs () << "Found legal mem " << arg <<"!\n";
+          }
+        }
+      }
+    }
     
     if (!HornCexSmtFilename.empty ())
     {
