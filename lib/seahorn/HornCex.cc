@@ -457,20 +457,24 @@ namespace seahorn
     
     ZSolver<EZ3> solver (hm.getZContext ());
     ExprVector legal_addrs;
+    ExprVector legal_addr_exprs;
     for (Expr v : side)
     {
       solver.assertExpr (v);
 
       if (bind::isFapp (v))
       {
-        Expr name = bind::fname (v);
+        errs () << "Found an FAPP!\n";
+        Expr name = bind::fname (v->first());
         if (isOpX<STRING> (name))
         {
-          if (std::strcmp(getTerm<std::string> (name), "legal_addr") == 0)
+          errs () << "Found that FAPP has a name that is a STRING\n";
+          if (std::strcmp(getTerm<std::string> (name).c_str(), "legal_addr") == 0)
           {
             Expr arg = v->last();
             legal_addrs.push_back (arg);
-            errs () << "Found legal mem " << arg <<"!\n";
+            legal_addr_exprs.push_back (v);
+            errs () << "Found legal mem " << *arg <<"!\n";
           }
         }
       }
@@ -483,8 +487,27 @@ namespace seahorn
       if (!EC) solver.toSmtLib (file);
       else errs () << "Could not open: " << HornCexSmtFilename << "\n";
     }
-    
-    auto res = solver.solve ();
+
+    boost::tribool res;
+    while(res = solver.solve ())
+    {
+      auto mdl (solver.getModel ());
+      bool all_good = true;
+      for (unsigned i = 0; i < legal_addrs.size(); ++i)
+      {
+        Expr addr_val = mdl.eval(legal_addrs[i]);
+        errs () << "Address value: " << *addr_val << "\n";
+        if (false)
+        {
+	  all_good = false;
+          solver.assertExpr (mk<OR> (mk<NEG> (legal_addr_exprs[i]),
+                                     mk<GT> (legal_addrs[i], Expr(0))));
+          break;
+        }
+      }
+      if (all_good)
+	break;
+    }
     
     
     LOG ("cex",
