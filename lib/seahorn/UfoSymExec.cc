@@ -820,14 +820,31 @@ namespace
     {
       if (InferMemSafety)
       {
-        Value *pop = I.getPointerOperand ()->stripPointerCasts ();
         // -- successful load through a gep implies that the base
         // -- address of the gep is not null
+        Value *pop = I.getPointerOperand ();
+        if (!m_sem.m_analyzing_cex)
+          pop = pop->stripPointerCasts();
         if (GetElementPtrInst *gep = dyn_cast<GetElementPtrInst> (pop))
         {
           Expr base = lookup (*gep->getPointerOperand ());
           if (base)
-            m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+          {
+            if (m_sem.m_analyzing_cex)
+            {
+              ExprVector ftype;
+              ftype.push_back(mk<INT_TY> (m_efac));
+              ftype.push_back(mk<BOOL_TY> (m_efac));
+              Expr fdecl = bind::fdecl (mkTerm<std::string> ("legal_addr", m_efac), ftype);
+              ExprVector args;
+              args.push_back (base);
+              m_side.push_back (bind::fapp(fdecl, args));
+            }
+            else
+            {
+              m_side.push_back (boolop::limp (m_activeLit, mk<GT> (base, zeroE)));
+            }
+          }
         }
       }
 
