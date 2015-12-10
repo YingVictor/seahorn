@@ -470,17 +470,14 @@ namespace seahorn
         frontier.pop_back ();
         if (bind::isFapp (e))
         {
-          errs () << "Found an FAPP!\n";
           Expr name = bind::fname (e->first());
           if (isOpX<STRING> (name))
           {
-            errs () << "Found that FAPP has a name that is a STRING\n";
             if (std::strcmp(getTerm<std::string> (name).c_str(), "legal_addr") == 0)
             {
               Expr arg = e->last();
               legal_addrs.push_back (arg);
               legal_addr_exprs.push_back (e);
-              errs () << "Found legal mem " << *arg <<"!\n";
             }
           }
         }
@@ -511,7 +508,6 @@ namespace seahorn
       for (unsigned i = 0; i < legal_addrs.size(); ++i)
       {
         Expr addr_val = mdl.eval(legal_addrs[i]);
-        errs () << "Address value: " << *addr_val << "\n";
         ZSolver<EZ3> temp_solver (hm.getZContext ());
         temp_solver.assertExpr (mk<GT> (addr_val, zeroE));
         if (!temp_solver.solve ())
