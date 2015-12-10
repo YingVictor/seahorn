@@ -462,19 +462,33 @@ namespace seahorn
     {
       solver.assertExpr (v);
 
-      if (bind::isFapp (v))
+      ExprVector frontier;
+      frontier.push_back (v);
+      while (!frontier.empty())
       {
-        errs () << "Found an FAPP!\n";
-        Expr name = bind::fname (v->first());
-        if (isOpX<STRING> (name))
+        Expr e = frontier.back ();
+        frontier.pop_back ();
+        if (bind::isFapp (e))
         {
-          errs () << "Found that FAPP has a name that is a STRING\n";
-          if (std::strcmp(getTerm<std::string> (name).c_str(), "legal_addr") == 0)
+          errs () << "Found an FAPP!\n";
+          Expr name = bind::fname (e->first());
+          if (isOpX<STRING> (name))
           {
-            Expr arg = v->last();
-            legal_addrs.push_back (arg);
-            legal_addr_exprs.push_back (v);
-            errs () << "Found legal mem " << *arg <<"!\n";
+            errs () << "Found that FAPP has a name that is a STRING\n";
+            if (std::strcmp(getTerm<std::string> (name).c_str(), "legal_addr") == 0)
+            {
+              Expr arg = e->last();
+              legal_addrs.push_back (arg);
+              legal_addr_exprs.push_back (e);
+              errs () << "Found legal mem " << *arg <<"!\n";
+            }
+          }
+        }
+        if (e->arity ())
+        {
+          for (ENode::args_iterator it = e->args_begin (), end = e->args_end (); it != end; ++it)
+          {
+            frontier.push_back (*it);
           }
         }
       }
@@ -489,6 +503,7 @@ namespace seahorn
     }
 
     boost::tribool res;
+    Expr zeroE = mkTerm<mpz_class> (0, efac);
     while(res = solver.solve ())
     {
       auto mdl (solver.getModel ());
@@ -497,11 +512,17 @@ namespace seahorn
       {
         Expr addr_val = mdl.eval(legal_addrs[i]);
         errs () << "Address value: " << *addr_val << "\n";
-        if (false)
+        ZSolver<EZ3> temp_solver (hm.getZContext ());
+        temp_solver.assertExpr (mk<GT> (addr_val, zeroE));
+        if (!temp_solver.solve ())
         {
 	  all_good = false;
-          solver.assertExpr (mk<OR> (mk<NEG> (legal_addr_exprs[i]),
-                                     mk<GT> (legal_addrs[i], Expr(0))));
+          Expr new_constraint = mk<OR> (mk<NEG> (legal_addr_exprs[i]),
+                                        mk<GT> (legal_addrs[i], zeroE));
+          solver.assertExpr (new_constraint);
+          side.push_back (new_constraint);
+          legal_addrs.erase(legal_addrs.begin()+i);
+          legal_addr_exprs.erase(legal_addr_exprs.begin()+i);
           break;
         }
       }
