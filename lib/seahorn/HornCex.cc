@@ -500,23 +500,38 @@ namespace seahorn
     }
 
     boost::tribool res;
-    Expr zeroE = mkTerm<mpz_class> (0, efac);
     while(res = solver.solve ())
     {
+      ZSolver<EZ3> temp_solver (hm.getZContext ());
+      Expr zeroE = mkTerm<mpz_class> (0, efac);
+      Expr fourE = mkTerm<mpz_class> (4, efac);
       auto mdl (solver.getModel ());
       bool all_good = true;
       for (unsigned i = 0; i < legal_addrs.size(); ++i)
       {
         Expr addr_val = mdl.eval(legal_addrs[i]);
-        ZSolver<EZ3> temp_solver (hm.getZContext ());
+        temp_solver.reset ();
         temp_solver.assertExpr (mk<GT> (addr_val, zeroE));
+        temp_solver.assertExpr (mk<EQ> (mk<MOD> (addr_val, fourE), zeroE));
         if (!temp_solver.solve ())
         {
-	  all_good = false;
+          all_good = false;
+
+          // Add assumption
+          // legal_addr(x) --> (x > 0)
           Expr new_constraint = mk<OR> (mk<NEG> (legal_addr_exprs[i]),
                                         mk<GT> (legal_addrs[i], zeroE));
           solver.assertExpr (new_constraint);
           side.push_back (new_constraint);
+
+          // Add assumption
+          // legal_addr(x) --> (x % 4 == 0)
+          new_constraint = mk<OR> (mk<NEG> (legal_addr_exprs[i]),
+                                   mk<EQ> (mk<MOD> (legal_addrs[i], fourE), zeroE));
+          solver.assertExpr (new_constraint);
+          side.push_back (new_constraint);
+
+          // We do not need to check this variable in the future.
           legal_addrs.erase(legal_addrs.begin()+i);
           legal_addr_exprs.erase(legal_addr_exprs.begin()+i);
           break;
