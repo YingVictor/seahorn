@@ -500,17 +500,19 @@ namespace seahorn
     }
 
     boost::tribool res;
-    while(res = solver.solve ())
+    Expr zeroE = mkTerm<mpz_class> (0, efac);
+    Expr fourE = mkTerm<mpz_class> (4, efac);
+    bool all_good = false;
+    while((res = solver.solve ()) && !all_good)
     {
-      ZSolver<EZ3> temp_solver (hm.getZContext ());
-      Expr zeroE = mkTerm<mpz_class> (0, efac);
-      Expr fourE = mkTerm<mpz_class> (4, efac);
       auto mdl (solver.getModel ());
-      bool all_good = true;
+      all_good = true;
       for (unsigned i = 0; i < legal_addrs.size(); ++i)
       {
         Expr addr_val = mdl.eval(legal_addrs[i]);
-        temp_solver.reset ();
+        // Ugly hack to check whether addr_val is good
+        // There's probably a better way to do this
+        ZSolver<EZ3> temp_solver (hm.getZContext ());
         temp_solver.assertExpr (mk<GT> (addr_val, zeroE));
         temp_solver.assertExpr (mk<EQ> (mk<MOD> (addr_val, fourE), zeroE));
         if (!temp_solver.solve ())
@@ -537,8 +539,6 @@ namespace seahorn
           break;
         }
       }
-      if (all_good)
-	break;
     }
     
     
